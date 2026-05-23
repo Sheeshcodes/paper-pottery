@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- this is pot making class -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -56,7 +55,7 @@
   input[type=range]{width:var(--sld); accent-color:#14110d; flex:0 0 auto;}
   .group{display:none;} .group.show{display:flex; flex-direction:column; gap:11px;}
   /* compact color swatch — tap to open the wheel */
-  .cswatch{width:38px; height:38px; border-radius:11px; border:none; box-shadow:inset 0 0 0 2px rgba(255,255,255,.85), 0 3px 10px rgba(0,0,0,.18); background:#2f5d50;}
+  .cswatch{flex:0 0 auto; width:38px; height:38px; border-radius:11px; border:none; box-shadow:inset 0 0 0 2px rgba(255,255,255,.85), 0 3px 10px rgba(0,0,0,.18); background:#2f5d50; cursor:pointer;}
   .playbtn{flex:0 0 auto; background:rgba(255,255,255,.6); color:#14110d; font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:inset 0 0 0 1px rgba(255,255,255,.7), 0 2px 8px rgba(80,90,120,.14);}
   .playbtn.paused{background:var(--coral); color:#fff;}
   /* photoshop-style vertical layer stack */
@@ -66,6 +65,10 @@
     -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); font-size:12px; font-weight:700; color:#5b5347;}
   .lrow.on{box-shadow:inset 0 0 0 2px #14110d; color:#14110d;}
   .lrow .thumb{width:22px; height:22px; border-radius:6px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.12); background:#fff;}
+  .lrow .grip{cursor:grab; color:#b8b0a2; font-size:12px; letter-spacing:-2px; line-height:1; user-select:none; touch-action:none; padding:0 1px;}
+  .lrow .grip:active{cursor:grabbing;}
+  .lrow .lx{font-size:12px; color:#bb7a9a; cursor:pointer; margin-left:2px;}
+  .lrow.dragging{box-shadow:inset 0 0 0 2px #14110d, 0 8px 22px rgba(0,0,0,.28); background:rgba(255,255,255,.92); position:relative;}
   .lrow .lname{flex:1;}
   .lrow.bg{background:rgba(255,255,255,.62);}
   .hidden{display:none !important;}
@@ -114,6 +117,13 @@
     #layersToggle{display:none;}
     .layerstack.collapsed{display:flex !important;}
     .card{--sld:60px;}
+    #g-paint .row{flex-wrap:wrap;}
+    #g-paint .row > .chip:not(.flowchip){flex:1 1 auto;}     /* BRUSH fills line 1 after the swatch */
+    #g-paint .flowchip{flex:0 0 auto; width:calc(100% - 46px); margin-left:46px;}  /* 38px swatch + 8px gap */
+    #g-paint .chip{flex:1 1 auto;}
+    #g-paint .chip input[type=range]{flex:1 1 auto; width:auto;}
+    #g-common .chip{flex:1 1 auto;}
+    #g-common .chip input[type=range]{flex:1 1 auto; width:auto;}
   }
   /* control surface uses the light defaults above */
   /* layers accordion */
@@ -121,14 +131,6 @@
   #layersCaret{transition:transform .2s ease;} #layersCaret.open{transform:rotate(90deg);}
   .layerstack.collapsed{display:none;}
 </style>
-<!-- Google Analytics 4 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q7S11HC9JW"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-Q7S11HC9JW');
-</script>
 </head>
 <body>
 <div class="card">
@@ -155,8 +157,8 @@
       <div class="group" id="g-paint">
         <div class="row">
           <button class="cswatch" id="brushSwatch" title="Brush colour"></button>
-          <span class="chip"><label>BRUSH</label><input type="range" id="brush" min="4" max="80" value="26"></span>
-          <span class="chip"><label>FLOW</label><input type="range" id="flow" min="10" max="100" value="80"></span>
+          <span class="chip"><label>BRUSH</label><input type="range" id="brush" min="3" max="130" value="26"></span>
+          <span class="chip flowchip"><label>FLOW</label><input type="range" id="flow" min="4" max="100" value="80"></span>
         </div>
         <button class="chip accordion" id="layersToggle"><span>LAYERS</span><span id="layersCaret">›</span></button>
         <div class="layerstack collapsed" id="layers"></div>
@@ -221,12 +223,12 @@
 /* ============================================================ PAPER POTTERY v5 ============================================================ */
 const NSEG=80, TEX_W=1200, TEX_H=600, MIN_R=0.18, MAX_R=1.7, UNIT_CM=5, NUM_LAYERS=4;
 const CREAM='#ece7dd', CORAL='#fb5a4b', COBALT='#1f7fe0', GREEN='#1f9d57', RED='#e23b3b';
-let mode='height', spinSpeed=0.025, height=2.6, paused=false;
+let mode='height', spinSpeed=0.0546, height=2.6, paused=false;
 let R=new Float32Array(NSEG+1).fill(0.9);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 /* editable glaze gradient ON THE POT; page background is a constant white→light-blue */
-let glaze={mode:'gradient', a:'#1f4f8c', b:'#eaf3fc'};
+let glaze={mode:'gradient', a:'#5a93d0', b:'#021c4f'};
 const INK='#14110d';
 const PAGEBG=['#ffffff','#dce9f7'];
 function inkColor(){return INK;}
@@ -272,10 +274,11 @@ drawGlaze();
 
 let activeLayer=0;
 const layerC=[];for(let i=0;i<NUM_LAYERS;i++){const c=document.createElement('canvas');c.width=TEX_W;c.height=TEX_H;layerC.push(c);}
+let layerOrder=[0,1,2,3];   // canvas indices, bottom → top (paint order)
 const texCanvas=document.createElement('canvas');texCanvas.width=TEX_W;texCanvas.height=TEX_H;const texCtx=texCanvas.getContext('2d');
 const texture=new THREE.CanvasTexture(texCanvas);texture.colorSpace=THREE.SRGBColorSpace;
 const bumpTex=new THREE.CanvasTexture(clayBump);
-function composite(){texCtx.clearRect(0,0,TEX_W,TEX_H);texCtx.drawImage(clayBase,0,0);for(let i=0;i<NUM_LAYERS;i++)texCtx.drawImage(layerC[i],0,0);texture.needsUpdate=true;}
+function composite(){texCtx.clearRect(0,0,TEX_W,TEX_H);texCtx.drawImage(clayBase,0,0);for(const idx of layerOrder)texCtx.drawImage(layerC[idx],0,0);texture.needsUpdate=true;}
 composite();
 const clayMat=new THREE.MeshStandardMaterial({map:texture,bumpMap:bumpTex,bumpScale:0.008,roughness:0.4,metalness:0.06,side:THREE.DoubleSide});
 let pot=null;
@@ -308,7 +311,16 @@ canvas.addEventListener('pointerup',endPtr);canvas.addEventListener('pointercanc
 /* carve: only inward (toward the axis). A finger on the right that moves left removes clay; same on the left moving right. */
 function carve(dx){const h=hit();if(!h)return;const t=clamp((h.point.y+height/2)/height,0,1);const idx=Math.round(t*NSEG);
   const side=h.point.x>=0?1:-1;const inward=side>0?-dx:dx;const amt=Math.max(0,inward)*0.007;if(amt<=0)return;
-  const sigma=NSEG/14;for(let i=0;i<=NSEG;i++){const w=Math.exp(-((i-idx)**2)/(2*sigma*sigma));R[i]=clamp(R[i]-amt*w,MIN_R,R[i]);}build();}
+  const sigma=NSEG/14;
+  for(let i=0;i<=NSEG;i++){
+    // near the rim, don't let the Gaussian fall off above the touch — keep full strength up to the lip
+    const d=(idx>=NSEG-Math.round(sigma*1.5)&&i>idx)?0:(i-idx);
+    const w=Math.exp(-(d*d)/(2*sigma*sigma));
+    R[i]=clamp(R[i]-amt*w,MIN_R,R[i]);
+  }
+  // only the very top necks IN: across the top 4 rings the wall must not widen toward the lip
+  for(let i=Math.max(idx,NSEG-4);i<NSEG;i++){if(R[i+1]>R[i])R[i+1]=R[i];}
+  build();}
 function paintAt(id){const h=hit();if(!h||!h.uv){paintLast.delete(id);return;}
   const x=h.uv.x*TEX_W,y=(1-h.uv.y)*TEX_H;const ctx=layerC[activeLayer].getContext('2d');
   ctx.fillStyle=currentColor();ctx.globalAlpha=+document.getElementById('flow').value/100;
@@ -381,27 +393,52 @@ document.querySelectorAll('#modes button').forEach(t=>t.addEventListener('click'
   document.getElementById('title').textContent=m[1];document.getElementById('hint').textContent=m[2];
   document.getElementById('g-paint').classList.toggle('show',mode==='paint');
   document.getElementById('g-common').classList.add('show');
-  closePops();paintLast.clear();
-  gtag('event','mode_switch',{mode:t.dataset.mode});}));
-document.getElementById('spin').addEventListener('input',e=>spinSpeed=(+e.target.value/100)*0.06);
+  closePops();paintLast.clear();}));
+document.getElementById('spin').addEventListener('input',e=>spinSpeed=(+e.target.value/100)*0.13);
 (function(){const b=document.getElementById('playPause');b.addEventListener('click',()=>{paused=!paused;
   b.classList.toggle('paused',paused);b.textContent=paused?'▶':'❚❚';b.setAttribute('aria-label',paused?'Play spin':'Pause spin');});})();
 const layersEl=document.getElementById('layers');
 function markActive(){layersEl.querySelectorAll('.lrow[data-layer]').forEach(r=>r.classList.toggle('on',+r.dataset.layer===activeLayer));}
 function buildLayerStack(){layersEl.innerHTML='';
-  for(let i=NUM_LAYERS-1;i>=0;i--){const row=document.createElement('div');row.className='lrow';row.dataset.layer=i;
-    row.innerHTML=`<span class="thumb"></span><span class="lname">Layer ${i+1}</span><span class="lx" style="font-size:12px;color:#b7a;cursor:pointer;">✕</span>`;
+  // top of the visual list = top of the paint stack = last in layerOrder
+  for(let k=layerOrder.length-1;k>=0;k--){const i=layerOrder[k];
+    const row=document.createElement('div');row.className='lrow';row.dataset.layer=i;
+    row.innerHTML=`<span class="grip" title="Drag to reorder">⋮⋮</span><span class="thumb"></span><span class="lname">Layer ${i+1}</span><span class="lx" title="Clear layer">✕</span>`;
     row.addEventListener('click',ev=>{if(ev.target.classList.contains('lx')){ev.stopPropagation();layerC[i].getContext('2d').clearRect(0,0,TEX_W,TEX_H);composite();return;}activeLayer=i;markActive();});
+    attachDrag(row);
     layersEl.appendChild(row);}
   const bgrow=document.createElement('div');bgrow.className='lrow bg';
   bgrow.innerHTML=`<span class="thumb" id="bgThumb"></span><span class="lname">Background</span><span style="font-size:10px;color:#8a7c6a;letter-spacing:.08em;">GLAZE ›</span>`;
   bgrow.addEventListener('click',openGlaze);layersEl.appendChild(bgrow);
   markActive();updateSwatches();}
+
+/* pointer-based drag reordering (touch + mouse). Reorders the paint rows only; Background stays pinned. */
+let dragState=null;
+function attachDrag(row){const grip=row.querySelector('.grip');if(!grip)return;
+  grip.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();
+    const rows=[...layersEl.querySelectorAll('.lrow[data-layer]')];
+    dragState={row,startY:e.clientY,rows,h:row.offsetHeight};
+    row.classList.add('dragging');grip.setPointerCapture(e.pointerId);});
+  grip.addEventListener('pointermove',e=>{if(!dragState||dragState.row!==row)return;
+    const dy=e.clientY-dragState.startY;row.style.transform=`translateY(${dy}px)`;row.style.zIndex=5;});
+  grip.addEventListener('pointerup',e=>{if(!dragState||dragState.row!==row)return;
+    row.classList.remove('dragging');row.style.transform='';row.style.zIndex='';
+    const fromCanvas=+row.dataset.layer;
+    const siblings=[...layersEl.querySelectorAll('.lrow[data-layer]')].filter(r=>r!==row);
+    let visualPos=siblings.length;                       // default: drop at bottom
+    for(let j=0;j<siblings.length;j++){const b=siblings[j].getBoundingClientRect();
+      if(e.clientY<b.top+b.height/2){visualPos=j;break;}}
+    let vis=layerOrder.slice().reverse();                // top→bottom canvas indices
+    vis.splice(vis.indexOf(fromCanvas),1);               // remove dragged
+    vis.splice(visualPos,0,fromCanvas);                  // insert at new visual slot
+    layerOrder=vis.reverse();                            // back to bottom→top
+    dragState=null;composite();buildLayerStack();});}
+
 buildLayerStack();
 document.getElementById('layersToggle').addEventListener('click',()=>{
   const ls=document.getElementById('layers'),car=document.getElementById('layersCaret');
   const open=ls.classList.toggle('collapsed')===false;car.classList.toggle('open',open);});
-document.getElementById('reset').addEventListener('click',()=>{gtag('event','reset_pot');height=2.6;R.fill(0.9);base.position.y=-height/2-0.06;build();layerC.forEach(c=>c.getContext('2d').clearRect(0,0,TEX_W,TEX_H));composite();});
+document.getElementById('reset').addEventListener('click',()=>{height=2.6;R.fill(0.9);base.position.y=-height/2-0.06;build();layerC.forEach(c=>c.getContext('2d').clearRect(0,0,TEX_W,TEX_H));composite();});
 
 /* ============================================================ EXPORT ============================================================ */
 const A4=[1754,1240];
@@ -464,14 +501,14 @@ const caps=[
  'Print · assembly. Cut each petal — including the comb of glue teeth down the right edge. Score the dotted centre and curl. Fold the green teeth back on the edge and glue them under the next petal\u2019s left edge, around the ring. The teeth let the seam follow the curve without buckling.',
  'Print · clean. The same petals with artwork only and a faint cut outline — a tidier print once you know the assembly.'];
 let curPage=0;
-document.getElementById('export').addEventListener('click',async()=>{gtag('event','export_opened');try{await document.fonts.ready;}catch(e){}
+document.getElementById('export').addEventListener('click',async()=>{try{await document.fonts.ready;}catch(e){}
   buildNetPage(pageCanvases[0]);buildOrthoPage(pageCanvases[1]);buildPrintLines(pageCanvases[2]);buildPrintMarks(pageCanvases[3]);
   showPage(0);document.getElementById('exportView').classList.add('show');});
 document.querySelectorAll('.ptabs button').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.ptabs button').forEach(x=>x.classList.remove('on'));t.classList.add('on');showPage(+t.dataset.page);}));
 function showPage(i){curPage=i;const src=pageCanvases[i];netCanvas.width=src.width;netCanvas.height=src.height;netCanvas.getContext('2d').drawImage(src,0,0);document.getElementById('exportCap').textContent=caps[i];}
 document.getElementById('closeExport').addEventListener('click',()=>document.getElementById('exportView').classList.remove('show'));
-document.getElementById('download').addEventListener('click',()=>{gtag('event','download_pdf');downloadPDF();});
+document.getElementById('download').addEventListener('click',downloadPDF);
 
 function profile(){const ys=[],rs=[];for(let i=0;i<=NSEG;i++){ys.push(-height/2+(i/NSEG)*height);rs.push(R[i]);}
   const slant=[0];for(let i=1;i<=NSEG;i++)slant.push(slant[i-1]+Math.hypot(ys[i]-ys[i-1],rs[i]-rs[i-1]));return{ys,rs,slant,total:slant[NSEG],maxR:Math.max(...rs)};}
@@ -549,7 +586,7 @@ function buildOrthoPage(cv){const prevRot=pot.rotation.y;pot.rotation.y=0;base.v
 
 function layoutArt(p){const B=box();const PXM=printScale(p);const aw=2*Math.PI*p.maxR*PXM,ah=p.total*PXM;return{aw,ah,ax:B.x+(B.w-aw)/2,ay:B.y+(B.h-ah)/2,PXM};}
 /* artwork over the editable background (so the bg prints behind unpainted clay) */
-function artCanvas(){const a=document.createElement('canvas');a.width=TEX_W;a.height=TEX_H;const x=a.getContext('2d');x.drawImage(clayBase,0,0);for(let i=0;i<NUM_LAYERS;i++)x.drawImage(layerC[i],0,0);return a;}
+function artCanvas(){const a=document.createElement('canvas');a.width=TEX_W;a.height=TEX_H;const x=a.getContext('2d');x.drawImage(clayBase,0,0);for(const idx of layerOrder)x.drawImage(layerC[idx],0,0);return a;}
 function drawArtBlock(ctx,p,L,src){for(let py=0;py<L.ah;py++){const i=clamp(Math.round(NSEG-idxBySlant(p,py/L.ah)),0,NSEG);const srcY=Math.round((1-i/NSEG)*(TEX_H-1));ctx.drawImage(src,0,srcY,TEX_W,1,L.ax,L.ay+py,L.aw,py+1<L.ah?2:1);}}
 function trimTab(ctx,L,ink){ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.strokeRect(L.ax,L.ay,L.aw,L.ah);
   ctx.save();ctx.globalAlpha=.5;ctx.setLineDash([4,5]);ctx.strokeStyle=ink;ctx.strokeRect(L.ax-22,L.ay,22,L.ah);ctx.restore();
