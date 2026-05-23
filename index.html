@@ -329,8 +329,8 @@ const texCanvas=document.createElement('canvas');texCanvas.width=TEX_W;texCanvas
 const texture=new THREE.CanvasTexture(texCanvas);texture.colorSpace=THREE.SRGBColorSpace;
 const bumpTex=new THREE.CanvasTexture(clayBump);
 function composite(){texCtx.clearRect(0,0,TEX_W,TEX_H);texCtx.drawImage(clayBase,0,0);for(const idx of layerOrder)texCtx.drawImage(layerC[idx],0,0);texture.needsUpdate=true;
-  if(typeof updateLayerThumbs==='function')scheduleThumbs();}
-let _thumbT=0;function scheduleThumbs(){const now=performance.now();if(now-_thumbT<120)return;_thumbT=now;updateLayerThumbs();}
+  if(thumbsReady)scheduleThumbs();}
+let thumbsReady=false,_thumbT=0;function scheduleThumbs(){const now=performance.now();if(now-_thumbT<120)return;_thumbT=now;updateLayerThumbs();}
 composite();
 const clayMat=new THREE.MeshStandardMaterial({map:texture,bumpMap:bumpTex,bumpScale:0.008,roughness:0.4,metalness:0.06,side:THREE.DoubleSide});
 let pot=null;
@@ -523,6 +523,7 @@ function attachDrag(row){const grip=row.querySelector('.grip');if(!grip)return;
     dragState=null;composite();buildLayerStack();});}
 
 buildLayerStack();
+thumbsReady=true;updateLayerThumbs();
 document.getElementById('layersToggle').addEventListener('click',()=>{
   const ls=document.getElementById('layers'),car=document.getElementById('layersCaret');
   const open=ls.classList.toggle('collapsed')===false;car.classList.toggle('open',open);});
