@@ -152,7 +152,7 @@
     </div>
     <div class="controls">
       <div class="group show" id="g-common">
-        <div class="row"><button class="cswatch playbtn" id="playPause" title="Pause / play spin" aria-label="Pause spin">❚❚</button><span class="chip"><label>SPIN</label><input type="range" id="spin" min="0" max="100" value="42"></span></div>
+        <div class="row"><button class="cswatch playbtn" id="playPause" title="Pause / play spin" aria-label="Pause spin">❚❚</button><span class="chip"><label>SPIN</label><input type="range" id="spin" min="6" max="100" value="42"></span></div>
       </div>
       <div class="group" id="g-paint">
         <div class="row">
@@ -393,10 +393,17 @@ document.querySelectorAll('#modes button').forEach(t=>t.addEventListener('click'
   document.getElementById('title').textContent=m[1];document.getElementById('hint').textContent=m[2];
   document.getElementById('g-paint').classList.toggle('show',mode==='paint');
   document.getElementById('g-common').classList.add('show');
+  syncPlayForMode();
   closePops();paintLast.clear();}));
 document.getElementById('spin').addEventListener('input',e=>spinSpeed=(+e.target.value/100)*0.13);
-(function(){const b=document.getElementById('playPause');b.addEventListener('click',()=>{paused=!paused;
-  b.classList.toggle('paused',paused);b.textContent=paused?'▶':'❚❚';b.setAttribute('aria-label',paused?'Play spin':'Pause spin');});})();
+const playBtn=document.getElementById('playPause');
+function setPlay(p){paused=p;playBtn.classList.toggle('paused',paused);playBtn.textContent=paused?'▶':'❚❚';
+  playBtn.setAttribute('aria-label',paused?'Play spin':'Pause spin');}
+playBtn.addEventListener('click',()=>{if(playBtn.disabled)return;setPlay(!paused);});
+function syncPlayForMode(){const lock=(mode==='shape');if(lock)setPlay(false);   // shaping always spins
+  playBtn.disabled=lock;playBtn.style.opacity=lock?.4:1;playBtn.style.cursor=lock?'not-allowed':'pointer';
+  playBtn.title=lock?'Spin can\u2019t be paused while shaping':'Pause / play spin';}
+syncPlayForMode();
 const layersEl=document.getElementById('layers');
 function markActive(){layersEl.querySelectorAll('.lrow[data-layer]').forEach(r=>r.classList.toggle('on',+r.dataset.layer===activeLayer));}
 function buildLayerStack(){layersEl.innerHTML='';
