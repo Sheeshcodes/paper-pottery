@@ -121,6 +121,14 @@
   #layersCaret{transition:transform .2s ease;} #layersCaret.open{transform:rotate(90deg);}
   .layerstack.collapsed{display:none;}
 </style>
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q7S11HC9JW"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-Q7S11HC9JW');
+</script>
 </head>
 <body>
 <div class="card">
@@ -373,7 +381,8 @@ document.querySelectorAll('#modes button').forEach(t=>t.addEventListener('click'
   document.getElementById('title').textContent=m[1];document.getElementById('hint').textContent=m[2];
   document.getElementById('g-paint').classList.toggle('show',mode==='paint');
   document.getElementById('g-common').classList.add('show');
-  closePops();paintLast.clear();}));
+  closePops();paintLast.clear();
+  gtag('event','mode_switch',{mode:t.dataset.mode});}));
 document.getElementById('spin').addEventListener('input',e=>spinSpeed=(+e.target.value/100)*0.06);
 (function(){const b=document.getElementById('playPause');b.addEventListener('click',()=>{paused=!paused;
   b.classList.toggle('paused',paused);b.textContent=paused?'▶':'❚❚';b.setAttribute('aria-label',paused?'Play spin':'Pause spin');});})();
@@ -392,7 +401,7 @@ buildLayerStack();
 document.getElementById('layersToggle').addEventListener('click',()=>{
   const ls=document.getElementById('layers'),car=document.getElementById('layersCaret');
   const open=ls.classList.toggle('collapsed')===false;car.classList.toggle('open',open);});
-document.getElementById('reset').addEventListener('click',()=>{height=2.6;R.fill(0.9);base.position.y=-height/2-0.06;build();layerC.forEach(c=>c.getContext('2d').clearRect(0,0,TEX_W,TEX_H));composite();});
+document.getElementById('reset').addEventListener('click',()=>{gtag('event','reset_pot');height=2.6;R.fill(0.9);base.position.y=-height/2-0.06;build();layerC.forEach(c=>c.getContext('2d').clearRect(0,0,TEX_W,TEX_H));composite();});
 
 /* ============================================================ EXPORT ============================================================ */
 const A4=[1754,1240];
@@ -455,14 +464,14 @@ const caps=[
  'Print · assembly. Cut each petal — including the comb of glue teeth down the right edge. Score the dotted centre and curl. Fold the green teeth back on the edge and glue them under the next petal\u2019s left edge, around the ring. The teeth let the seam follow the curve without buckling.',
  'Print · clean. The same petals with artwork only and a faint cut outline — a tidier print once you know the assembly.'];
 let curPage=0;
-document.getElementById('export').addEventListener('click',async()=>{try{await document.fonts.ready;}catch(e){}
+document.getElementById('export').addEventListener('click',async()=>{gtag('event','export_opened');try{await document.fonts.ready;}catch(e){}
   buildNetPage(pageCanvases[0]);buildOrthoPage(pageCanvases[1]);buildPrintLines(pageCanvases[2]);buildPrintMarks(pageCanvases[3]);
   showPage(0);document.getElementById('exportView').classList.add('show');});
 document.querySelectorAll('.ptabs button').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.ptabs button').forEach(x=>x.classList.remove('on'));t.classList.add('on');showPage(+t.dataset.page);}));
 function showPage(i){curPage=i;const src=pageCanvases[i];netCanvas.width=src.width;netCanvas.height=src.height;netCanvas.getContext('2d').drawImage(src,0,0);document.getElementById('exportCap').textContent=caps[i];}
 document.getElementById('closeExport').addEventListener('click',()=>document.getElementById('exportView').classList.remove('show'));
-document.getElementById('download').addEventListener('click',downloadPDF);
+document.getElementById('download').addEventListener('click',()=>{gtag('event','download_pdf');downloadPDF();});
 
 function profile(){const ys=[],rs=[];for(let i=0;i<=NSEG;i++){ys.push(-height/2+(i/NSEG)*height);rs.push(R[i]);}
   const slant=[0];for(let i=1;i<=NSEG;i++)slant.push(slant[i-1]+Math.hypot(ys[i]-ys[i-1],rs[i]-rs[i-1]));return{ys,rs,slant,total:slant[NSEG],maxR:Math.max(...rs)};}
