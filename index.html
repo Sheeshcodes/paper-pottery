@@ -25,6 +25,10 @@
   body{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:14px 0;}
   .appfoot{display:flex; align-items:center; gap:10px; color:#8a8276; font-size:12.5px; letter-spacing:.02em; font-weight:600;}
   .appfoot strong{color:#cfc8ba; font-weight:800;}
+  .appfoot .creditlink{display:inline-flex; align-items:center; gap:10px; color:inherit; text-decoration:none; cursor:pointer;}
+  .appfoot .creditlink:hover{color:#cfc8ba;}
+  .appfoot .creditlink:hover strong{color:#fff;}
+  .appfoot .creditlink:hover .iglink{color:#fff; box-shadow:inset 0 0 0 1px rgba(255,255,255,.4); transform:translateY(-1px);}
   .appfoot .iglink{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:9px; color:#cfc8ba; text-decoration:none;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.16); transition:color .15s, box-shadow .15s, transform .15s;}
   .appfoot .iglink:hover{color:#fff; box-shadow:inset 0 0 0 1px rgba(255,255,255,.4); transform:translateY(-1px);}
@@ -166,6 +170,18 @@
   .accordion{justify-content:space-between; cursor:pointer; align-self:stretch;}
   #layersCaret{display:inline-block; transition:transform .2s ease; line-height:1; font-size:13px;} #layersCaret.open{transform:rotate(180deg);}
   .layerstack.collapsed{display:none;}
+  /* ---- phones: stack the export footer, wrap buttons, scroll the filmstrip ---- */
+  @media (max-width:600px){
+    .sheetfoot{flex-direction:column; align-items:stretch; gap:10px; padding:12px 14px calc(14px + env(safe-area-inset-bottom));}
+    .igexport{flex-wrap:wrap; justify-content:flex-start; gap:8px;}
+    .nameinput{flex:1 1 100%; min-width:0; order:-1;}            /* name field on its own full-width row, first */
+    .igbtn{flex:1 1 0; justify-content:center; min-width:64px;}  /* 1:1 / 3:4 / 360 share a row evenly */
+    .igexport .igicon{display:none;}                            /* drop the decorative icon to save width */
+    #download{width:100%; justify-content:center; padding:12px;}
+    .filmstrip{justify-content:flex-start; overflow-x:auto; -webkit-overflow-scrolling:touch; gap:10px; padding:8px 12px;}
+    .thumb-pg{flex:0 0 auto;}
+    .thumb-pg canvas{width:64px; height:45px;}
+  }
 </style>
 </head>
 <body>
@@ -232,13 +248,15 @@
 </div>
 
 <footer class="appfoot">
-  <span>Created by <strong>Sheesh</strong></span>
-  <a class="iglink" href="https://www.instagram.com/ashish_john_mundu/" target="_blank" rel="noopener noreferrer" aria-label="Instagram: @ashish_john_mundu" title="@ashish_john_mundu">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="2" y="2" width="20" height="20" rx="5.5"/>
-      <circle cx="12" cy="12" r="4.2"/>
-      <circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" stroke="none"/>
-    </svg>
+  <a class="creditlink" href="https://www.instagram.com/ashish_john_mundu/" target="_blank" rel="noopener noreferrer" aria-label="Created by Sheesh, visit Instagram: @ashish_john_mundu" title="@ashish_john_mundu">
+    <span>Created by <strong>Sheesh</strong></span>
+    <span class="iglink">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="2" width="20" height="20" rx="5.5"/>
+        <circle cx="12" cy="12" r="4.2"/>
+        <circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" stroke="none"/>
+      </svg>
+    </span>
   </a>
 </footer>
 
@@ -610,7 +628,8 @@ const uiCaps=[
 const pageTags=['01','02','03','04'];
 let curPage=0;
 document.getElementById('export').addEventListener('click',async()=>{try{await document.fonts.ready;}catch(e){}
-  buildNetPage(pageCanvases[0]);buildOrthoPage(pageCanvases[1]);buildPrintLines(pageCanvases[2]);buildPrintMarks(pageCanvases[3]);
+  buildNetPage(pageCanvases[0]);buildPrintLines(pageCanvases[2]);buildPrintMarks(pageCanvases[3]);
+  buildOrthoPage(pageCanvases[1],()=>{buildFilmstrip();if(curPage===1)showPage(1);});
   buildFilmstrip();showPage(0);document.getElementById('exportView').classList.add('show');
   if(window.gtag)gtag('event','export_opened');});
 function buildFilmstrip(){const strip=document.getElementById('filmstrip');strip.innerHTML='';
@@ -682,7 +701,7 @@ function buildNetPage(cv){cv.width=A4[0];cv.height=A4[1];const ctx=cv.getContext
 function dimsLabel(ctx,p){const sc=printScale(p)/PXcm;ctx.fillStyle=inkColor();ctx.font='700 14px "Archivo"';
   ctx.fillText(`PIECE \u2248 ${(height*sc).toFixed(1)} cm TALL  ·  ${(2*p.maxR*sc).toFixed(1)} cm WIDE  ·  ${GORES} GORES`,44,98);}
 
-function buildOrthoPage(cv){const prevRot=pot.rotation.y;const VPX=520,imgs=[];
+function buildOrthoPage(cv,onDone){const prevRot=pot.rotation.y;const VPX=520,imgs=[];
   try{
     pot.rotation.y=0;base.visible=false;scene.background=new THREE.Color(0xffffff);
     const s=height/2+0.6,ocam=new THREE.OrthographicCamera(-s,s,s,-s,0.1,100);
@@ -742,7 +761,7 @@ function buildOrthoPage(cv){const prevRot=pot.rotation.y;const VPX=520,imgs=[];
   let loaded=0;const total=imgs.length||1;
   imgs.forEach(([name,data],k)=>{const im=new Image();im.onload=()=>{const [cxx,cyy]=cellAt(k);
     ctx.fillStyle='#fff';ctx.fillRect(cxx,cyy,cell,cell);ctx.drawImage(im,cxx,cyy,cell,cell);frame(cxx,cyy,name);
-    if(++loaded===total){drawPlan(4,'Top',true);drawPlan(5,'Bottom',false);if(curPage===1)showPage(1);}};im.src=data;});
+    if(++loaded===total){drawPlan(4,'Top',true);drawPlan(5,'Bottom',false);if(curPage===1)showPage(1);if(onDone)onDone();}};im.src=data;});
   const realH=(height*scaleCm).toFixed(1),realDia=(2*p.maxR*scaleCm).toFixed(1);
   ctx.fillStyle=ink;ctx.font='800 15px "Archivo"';ctx.textAlign='center';
   ctx.fillText(`FOR REFERENCE · FINISHED PIECE \u2248 ${realH} CM TALL · ${realDia} CM WIDE`,A4[0]/2,104);ctx.textAlign='left';}
@@ -764,7 +783,7 @@ function buildPrintMarks(cv){cv.width=A4[0];cv.height=A4[1];const ctx=cv.getCont
 /* ---------- Instagram-ready post export ---------- */
 function renderPotHiRes(size,angle){
   const prevRot=pot.rotation.y, prevBaseRot=base.rotation.y, prevBg=scene.background, prevBase=base.visible, prevPR=renderer.getPixelRatio();
-  pot.rotation.y=angle; base.rotation.y=0; base.visible=true; scene.background=null;
+  pot.rotation.y=angle; base.rotation.y=angle; base.visible=true; scene.background=null;
   renderer.setPixelRatio(2);                          // 2× supersample → crisp output
   const cam=new THREE.PerspectiveCamera(34,1,0.1,100);
   const topY=height/2, botY=-height/2-0.14;           // rim down to under the plate
