@@ -94,19 +94,44 @@
   .seg2 button{font-weight:800; font-size:11px; padding:6px 14px; background:transparent; border:none; color:#14110d;}
   .seg2 button.on{background:#14110d; color:#fff;}
 
-  #exportView{position:fixed; inset:0; z-index:30; background:rgba(13,13,12,.92); display:none; align-items:center; justify-content:center; padding:14px;}
+  #exportView{position:fixed; inset:0; z-index:30; background:rgba(8,9,12,.96); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; padding:14px;}
   #exportView.show{display:flex;}
-  .sheet{position:relative; width:min(960px,96vw); max-height:94vh; background:var(--cream); border-radius:22px;
-    overflow:hidden; display:flex; flex-direction:column; box-shadow:0 30px 80px rgba(0,0,0,.6);}
-  .sheethead{display:flex; align-items:center; justify-content:space-between; padding:16px 20px 0;}
-  .closeX{width:30px; height:30px; border:none; background:none; font-size:24px; color:var(--ink);}
-  .ptabs{display:flex; gap:6px; flex-wrap:wrap; padding:12px 20px;}
-  .ptabs button{font-weight:800; font-size:11px; padding:7px 11px; border-radius:999px; border:1.5px solid var(--ink); background:transparent; color:var(--ink); letter-spacing:.03em;}
-  .ptabs button.on{background:var(--ink); color:var(--cream);}
-  .preview{flex:1; overflow:auto; padding:0 20px; display:flex; justify-content:center;}
-  #netCanvas{max-width:100%; height:auto; border:1px solid var(--line); border-radius:8px;}
-  .pcap{font-family:"Fraunces",serif; font-style:italic; font-size:13.5px; color:#3c372e; padding:12px 24px; line-height:1.45;}
-  .sheetfoot{display:flex; gap:10px; justify-content:flex-end; padding:0 20px 18px;}
+  .sheet{position:relative; width:min(940px,96vw); max-height:95vh; background:linear-gradient(180deg,#191b21,#101116); border-radius:20px;
+    overflow:hidden; display:flex; flex-direction:column; box-shadow:0 40px 100px rgba(0,0,0,.7), inset 0 0 0 1px rgba(255,255,255,.07);}
+  .sheethead{display:flex; align-items:center; justify-content:space-between; padding:14px 18px 12px; border-bottom:1px solid rgba(255,255,255,.07);}
+  .sheettitle{display:flex; align-items:baseline; gap:11px;}
+  .sheettitle .eyebrow{font-family:"Archivo",sans-serif; font-weight:800; font-size:10px; letter-spacing:.22em; color:#6f7787;
+    border:1px solid rgba(255,255,255,.16); padding:4px 8px; border-radius:7px;}
+  .sheettitle .pgname{font-family:"Fraunces",serif; font-weight:600; font-size:19px; color:#f1ece2;}
+  .closeX{width:30px; height:30px; border:none; background:rgba(255,255,255,.06); border-radius:9px; font-size:20px; line-height:1; color:#cfcabf; cursor:pointer; transition:background .15s, color .15s;}
+  .closeX:hover{background:rgba(255,255,255,.14); color:#fff;}
+  .preview{flex:1 1 auto; min-height:0; overflow:auto; padding:16px 20px; display:flex; align-items:center; justify-content:center; background:
+    radial-gradient(120% 90% at 50% -10%, rgba(120,150,200,.07), transparent 60%);}
+  #netCanvas{display:block; max-width:100%; max-height:56vh; width:auto; height:auto; border-radius:6px; box-shadow:0 18px 46px rgba(0,0,0,.55), 0 0 0 1px rgba(0,0,0,.4); background:#fff;}
+  .pcap{font-family:"Fraunces",serif; font-style:italic; font-size:12.5px; color:#9aa0ab; padding:0 24px 8px; line-height:1.4; text-align:center; max-width:680px; margin:0 auto;}
+  /* macOS-style thumbnail filmstrip (landscape, matching the A4 pages) */
+  .filmstrip{display:flex; gap:14px; justify-content:center; align-items:flex-end; padding:9px 18px; background:rgba(0,0,0,.28); border-top:1px solid rgba(255,255,255,.07); flex-wrap:nowrap;}
+  .thumb-pg{position:relative; cursor:pointer; border:none; background:none; padding:0; display:flex; flex-direction:column; align-items:center; gap:6px; opacity:.62; transition:opacity .18s, transform .18s;}
+  .thumb-pg:hover{opacity:.9; transform:translateY(-2px);}
+  .thumb-pg.on{opacity:1;}
+  .thumb-pg canvas{width:74px; height:52px; border-radius:4px; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,.5); outline:1.5px solid transparent; transition:outline-color .18s, box-shadow .18s;}
+  .thumb-pg.on canvas{outline-color:var(--coral); box-shadow:0 6px 18px rgba(251,90,75,.4);}
+  .thumb-pg .tlabel{font-family:"Archivo",sans-serif; font-weight:700; font-size:8.5px; letter-spacing:.1em; color:#7c828e;}
+  .thumb-pg.on .tlabel{color:#e9e5dc;}
+  .sheetfoot{display:flex; gap:12px; justify-content:space-between; align-items:center; padding:11px 18px 14px;}
+  .igexport{display:flex; align-items:center; gap:7px;}
+  .igexport .igicon{color:#8a909c; flex:0 0 auto;}
+  .nameinput{flex:0 1 200px; min-width:120px; background:rgba(255,255,255,.07); color:#f1ece2; border:none; outline:none;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.16); border-radius:10px; padding:8px 12px; font-family:"Fraunces",serif; font-style:italic; font-size:14px;}
+  .nameinput::placeholder{color:#7c828e; font-style:italic;}
+  .nameinput:focus{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.42);}
+  .igbtn{background:rgba(255,255,255,.08); color:#e9e5dc; box-shadow:inset 0 0 0 1px rgba(255,255,255,.16); padding:8px 11px; display:inline-flex; align-items:center; gap:6px;}
+  .igbtn:hover{background:rgba(255,255,255,.16);}
+  .igbtn .dli{opacity:.72; flex:0 0 auto;}
+  .igbtn:hover .dli{opacity:1;}
+  #download{display:inline-flex; align-items:center; gap:7px;}
+  #download .dli{flex:0 0 auto; opacity:.9;}
+  /* (end export styles) */
   /* ----- iPad / wide landscape: pot+plate on the left, controls float on the right ----- */
   @media (min-width:760px) and (orientation:landscape){
     .card{width:min(1040px,96vw); height:min(90vh,720px); flex-direction:row;}
@@ -124,11 +149,13 @@
     #g-paint .chip input[type=range]{flex:1 1 auto; width:auto;}
     #g-common .chip{flex:1 1 auto;}
     #g-common .chip input[type=range]{flex:1 1 auto; width:auto;}
+    .sheet{max-height:96vh;}
+    #netCanvas{max-height:48vh;}
   }
   /* control surface uses the light defaults above */
   /* layers accordion */
   .accordion{justify-content:space-between; cursor:pointer; align-self:stretch;}
-  #layersCaret{transition:transform .2s ease;} #layersCaret.open{transform:rotate(90deg);}
+  #layersCaret{display:inline-block; transition:transform .2s ease; line-height:1; font-size:13px;} #layersCaret.open{transform:rotate(180deg);}
   .layerstack.collapsed{display:none;}
 </style>
 </head>
@@ -160,11 +187,11 @@
           <span class="chip"><label>BRUSH</label><input type="range" id="brush" min="3" max="130" value="26"></span>
           <span class="chip flowchip"><label>FLOW</label><input type="range" id="flow" min="4" max="100" value="80"></span>
         </div>
-        <button class="chip accordion" id="layersToggle"><span>LAYERS</span><span id="layersCaret">›</span></button>
+        <button class="chip accordion" id="layersToggle"><span>LAYERS</span><span id="layersCaret">⌄</span></button>
         <div class="layerstack collapsed" id="layers"></div>
       </div>
       <div class="actions">
-        <button class="btn" id="reset">RESET</button>
+        <button class="btn" id="reset">RESET SCALE</button>
         <button class="btn primary" id="export">EXPORT →</button>
       </div>
     </div>
@@ -181,7 +208,7 @@
     <button class="btn" id="wheelDone" style="align-self:stretch;">DONE</button>
   </div>
   <div class="popover" id="glazePop">
-    <div class="poptitle">Background glaze</div>
+    <div class="poptitle">Base colour</div>
     <div class="row" style="align-items:center;justify-content:space-between;width:100%;">
       <div class="seg2" id="glMode"><button data-m="flat">FLAT</button><button data-m="gradient" class="on">GRADIENT</button></div>
       <div class="row" id="glSwatches">
@@ -206,14 +233,25 @@
 
 <div id="exportView">
   <div class="sheet">
-    <div class="sheethead"><div class="badge">PAPER POTTERY · EXPORT</div><button class="closeX" id="closeExport">×</button></div>
-    <div class="ptabs">
-      <button class="on" data-page="0">01 PREVIEW</button><button data-page="1">02 VIEWS</button>
-      <button data-page="2">03 ASSEMBLY</button><button data-page="3">04 CLEAN</button>
+    <div class="sheethead">
+      <div class="sheettitle"><span class="eyebrow">EXPORT</span></div>
+      <button class="closeX" id="closeExport" aria-label="Close">×</button>
     </div>
     <div class="preview"><canvas id="netCanvas"></canvas></div>
     <div class="pcap" id="exportCap"></div>
-    <div class="sheetfoot"><button class="btn primary" id="download">DOWNLOAD PDF · A4</button></div>
+    <div class="filmstrip" id="filmstrip"></div>
+    <div class="sheetfoot">
+      <div class="igexport" title="Save a post-ready image">
+        <svg class="igicon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="3.2"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/>
+        </svg>
+        <input type="text" id="pieceName" class="nameinput" placeholder="Name your piece (optional)" maxlength="40" autocomplete="off">
+        <button class="btn igbtn" id="ig11" title="Image export · 1200 × 1200"><svg class="dli" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></svg>1:1</button>
+        <button class="btn igbtn" id="ig34" title="Image export · 1080 × 1440"><svg class="dli" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></svg>3:4</button>
+        <button class="btn igbtn" id="igvid" title="Video export · 1080 × 1080 · 360° MP4"><svg class="dli" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></svg>360°</button>
+      </div>
+      <button class="btn primary" id="download" title="Print export · A4 PDF"><svg class="dli" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></svg>A4 PDF</button>
+    </div>
   </div>
 </div>
 
@@ -221,9 +259,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* ============================================================ PAPER POTTERY v5 ============================================================ */
-const NSEG=80, TEX_W=1200, TEX_H=600, MIN_R=0.18, MAX_R=1.7, UNIT_CM=5, NUM_LAYERS=4;
+const NSEG=80, TEX_W=1200, TEX_H=600, MIN_R=0.18, MAX_R=1.7, UNIT_CM=2.1, NUM_LAYERS=4;
 const CREAM='#ece7dd', CORAL='#fb5a4b', COBALT='#1f7fe0', GREEN='#1f9d57', RED='#e23b3b';
-let mode='height', spinSpeed=0.0546, height=2.6, paused=false;
+let mode='height', spinSpeed=0.0334, height=2.6, paused=false;
 let R=new Float32Array(NSEG+1).fill(0.9);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
@@ -285,7 +323,16 @@ let pot=null;
 function build(){const pts=[];for(let i=0;i<=NSEG;i++)pts.push(new THREE.Vector2(Math.max(R[i],MIN_R*0.5),-height/2+(i/NSEG)*height));
   const geo=new THREE.LatheGeometry(pts,128);if(!pot){pot=new THREE.Mesh(geo,clayMat);scene.add(pot);}else{pot.geometry.dispose();pot.geometry=geo;}}
 build();
-function resize(){const w=canvas.clientWidth||1,h=canvas.clientHeight||1;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+function resize(){const w=canvas.clientWidth||1,h=canvas.clientHeight||1;renderer.setSize(w,h,false);camera.aspect=w/h;
+  // fit the whole pot + plate within the viewport (so the controls panel never crops it)
+  const topY=height/2, botY=-height/2-0.12;          // pot rim down to under the plate
+  const cy=(topY+botY)/2;                              // vertical centre of the subject
+  const halfH=(topY-botY)/2+0.35;                      // vertical half-extent + margin
+  const halfW=2.15;                                    // plate radius (~2) + margin
+  const vFov=camera.fov*Math.PI/180,t=Math.tan(vFov/2);
+  const distV=halfH/t, distH=halfW/(t*camera.aspect);
+  const dist=Math.min(9,Math.max(4.0,distV,distH))*1.04;
+  camera.position.set(0,cy,dist);camera.lookAt(0,cy,0);camera.updateProjectionMatrix();}
 new ResizeObserver(resize).observe(canvas);resize();
 function tick(){
   if(!paused){pot.rotation.y+=spinSpeed;base.rotation.y+=spinSpeed;
@@ -303,7 +350,7 @@ canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);
   if(mode==='paint'){setNDC(e);paintLast.delete(e.pointerId);paintHeld.set(e.pointerId,{x:e.clientX,y:e.clientY});paintAt(e.pointerId);}});
 canvas.addEventListener('pointermove',e=>{const p=pointers.get(e.pointerId);if(!p)return;
   const dx=e.clientX-p.x,dy=e.clientY-p.y;setNDC(e);
-  if(mode==='height'){height=clamp(height-dy*0.012,1.2,4.6);base.position.y=-height/2-0.06;build();}
+  if(mode==='height'){height=clamp(height-dy*0.012,1.2,4.6);base.position.y=-height/2-0.06;build();resize();}
   else if(mode==='shape'){carve(dx);}else if(mode==='paint'){paintHeld.set(e.pointerId,{x:e.clientX,y:e.clientY});paintAt(e.pointerId);}
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});});
 function endPtr(e){pointers.delete(e.pointerId);paintLast.delete(e.pointerId);paintHeld.delete(e.pointerId);}
@@ -394,8 +441,9 @@ document.querySelectorAll('#modes button').forEach(t=>t.addEventListener('click'
   document.getElementById('g-paint').classList.toggle('show',mode==='paint');
   document.getElementById('g-common').classList.add('show');
   syncPlayForMode();
+  document.getElementById('reset').textContent='RESET '+(mode==='height'?'SCALE':mode==='shape'?'SHAPE':'GLAZE');
   closePops();paintLast.clear();}));
-document.getElementById('spin').addEventListener('input',e=>spinSpeed=(+e.target.value/100)*0.13);
+document.getElementById('spin').addEventListener('input',e=>spinSpeed=Math.pow(+e.target.value/100,1.7)*0.146575);
 const playBtn=document.getElementById('playPause');
 function setPlay(p){paused=p;playBtn.classList.toggle('paused',paused);playBtn.textContent=paused?'▶':'❚❚';
   playBtn.setAttribute('aria-label',paused?'Play spin':'Pause spin');}
@@ -415,7 +463,7 @@ function buildLayerStack(){layersEl.innerHTML='';
     attachDrag(row);
     layersEl.appendChild(row);}
   const bgrow=document.createElement('div');bgrow.className='lrow bg';
-  bgrow.innerHTML=`<span class="thumb" id="bgThumb"></span><span class="lname">Background</span><span style="font-size:10px;color:#8a7c6a;letter-spacing:.08em;">GLAZE ›</span>`;
+  bgrow.innerHTML=`<span class="thumb" id="bgThumb"></span><span class="lname">Base colour</span><span style="font-size:10px;color:#8a7c6a;letter-spacing:.08em;">GLAZE ›</span>`;
   bgrow.addEventListener('click',openGlaze);layersEl.appendChild(bgrow);
   markActive();updateSwatches();}
 
@@ -445,7 +493,17 @@ buildLayerStack();
 document.getElementById('layersToggle').addEventListener('click',()=>{
   const ls=document.getElementById('layers'),car=document.getElementById('layersCaret');
   const open=ls.classList.toggle('collapsed')===false;car.classList.toggle('open',open);});
-document.getElementById('reset').addEventListener('click',()=>{height=2.6;R.fill(0.9);base.position.y=-height/2-0.06;build();layerC.forEach(c=>c.getContext('2d').clearRect(0,0,TEX_W,TEX_H));composite();});
+document.getElementById('reset').addEventListener('click',()=>{
+  if(mode==='height'){                       // SCALE: height only
+    height=2.6;base.position.y=-height/2-0.06;build();
+  }else if(mode==='shape'){                   // SHAPE: undo carving, keep height + paint
+    R.fill(0.9);build();
+  }else{                                      // GLAZE: clear paint + base colour, keep form
+    glaze={mode:'gradient', a:'#5a93d0', b:'#021c4f'};drawGlaze();
+    layerC.forEach(c=>c.getContext('2d').clearRect(0,0,TEX_W,TEX_H));
+    layerOrder=[0,1,2,3];activeLayer=0;buildLayerStack();composite();
+  }
+});
 
 /* ============================================================ EXPORT ============================================================ */
 const A4=[1754,1240];
@@ -454,10 +512,11 @@ const PXcm=A4[0]/29.7;            // ≈59 px per cm on a landscape A4 sheet
 const GORES=12;
 /* gore (petal) development — the only flat layout that folds into a curved surface of revolution */
 function layoutGores(p){const B=box(),N=GORES,tabW=18;
+  // scale to fill the sheet well (big pots large, small pots still substantial); gores + orthos share this exact PXM
   const PXMw=(B.w*0.96 - N*tabW)/(2*Math.PI*p.maxR);
   const PXMh=(B.h*0.9)/p.total;
   const PXM=Math.min(PXMw,PXMh);
-  const petalMax=2*Math.PI*p.maxR*PXM/N;          // widest petal (full width)
+  const petalMax=2*Math.PI*p.maxR*PXM/N;
   const colW=petalMax+tabW, totalW=colW*N, ah=p.total*PXM;
   return {N,tabW,PXM,petalMax,colW,totalW,ah,ax:B.x+(B.w-totalW)/2,ay:B.y+(B.h-ah)/2};}
 function printScale(p){return layoutGores(p).PXM;}   // ortho views share this exact scale
@@ -507,13 +566,28 @@ const caps=[
  'Six views at the true printed scale. Lay your folded piece straight on top to check it built to the right size.',
  'Print · assembly. Cut each petal — including the comb of glue teeth down the right edge. Score the dotted centre and curl. Fold the green teeth back on the edge and glue them under the next petal\u2019s left edge, around the ring. The teeth let the seam follow the curve without buckling.',
  'Print · clean. The same petals with artwork only and a faint cut outline — a tidier print once you know the assembly.'];
+const pageNames=['Flat Preview','Six Views','Assembly','Clean Print'];
+const uiCaps=[
+ 'A flat read of the form — full fold guide is printed on the sheet.',
+ 'Six views at true print scale to check your build size.',
+ 'The buildable petals — cut, score, curl & glue. Steps are printed on the sheet.',
+ 'Artwork-only petals — a tidier print once you know the steps.'];
+const pageTags=['01','02','03','04'];
 let curPage=0;
 document.getElementById('export').addEventListener('click',async()=>{try{await document.fonts.ready;}catch(e){}
   buildNetPage(pageCanvases[0]);buildOrthoPage(pageCanvases[1]);buildPrintLines(pageCanvases[2]);buildPrintMarks(pageCanvases[3]);
-  showPage(0);document.getElementById('exportView').classList.add('show');});
-document.querySelectorAll('.ptabs button').forEach(t=>t.addEventListener('click',()=>{
-  document.querySelectorAll('.ptabs button').forEach(x=>x.classList.remove('on'));t.classList.add('on');showPage(+t.dataset.page);}));
-function showPage(i){curPage=i;const src=pageCanvases[i];netCanvas.width=src.width;netCanvas.height=src.height;netCanvas.getContext('2d').drawImage(src,0,0);document.getElementById('exportCap').textContent=caps[i];}
+  buildFilmstrip();showPage(0);document.getElementById('exportView').classList.add('show');});
+function buildFilmstrip(){const strip=document.getElementById('filmstrip');strip.innerHTML='';
+  pageCanvases.forEach((src,i)=>{const b=document.createElement('button');b.className='thumb-pg'+(i===curPage?' on':'');b.dataset.page=i;
+    const tc=document.createElement('canvas');tc.width=148;tc.height=104;const x=tc.getContext('2d');
+    x.fillStyle='#fff';x.fillRect(0,0,tc.width,tc.height);
+    const s=Math.min(tc.width/src.width,tc.height/src.height),w=src.width*s,h=src.height*s;
+    x.drawImage(src,(tc.width-w)/2,(tc.height-h)/2,w,h);
+    b.appendChild(tc);const l=document.createElement('span');l.className='tlabel';l.textContent=pageTags[i]+' · '+pageNames[i].toUpperCase();b.appendChild(l);
+    b.addEventListener('click',()=>showPage(i));strip.appendChild(b);});}
+function showPage(i){curPage=i;const src=pageCanvases[i];netCanvas.width=src.width;netCanvas.height=src.height;netCanvas.getContext('2d').drawImage(src,0,0);
+  document.getElementById('exportCap').textContent=uiCaps[i];
+  document.querySelectorAll('.thumb-pg').forEach(t=>t.classList.toggle('on',+t.dataset.page===i));}
 document.getElementById('closeExport').addEventListener('click',()=>document.getElementById('exportView').classList.remove('show'));
 document.getElementById('download').addEventListener('click',downloadPDF);
 
@@ -574,7 +648,7 @@ function dimsLabel(ctx,p){const sc=printScale(p)/PXcm;ctx.fillStyle=inkColor();c
 
 function buildOrthoPage(cv){const prevRot=pot.rotation.y;pot.rotation.y=0;base.visible=false;scene.background=new THREE.Color(0xffffff);
   const s=height/2+0.6,ocam=new THREE.OrthographicCamera(-s,s,s,-s,0.1,100);
-  const views=[['Front',[0,0,10],[0,1,0]],['Right',[10,0,0],[0,1,0]],['Back',[0,0,-10],[0,1,0]],['Left',[-10,0,0],[0,1,0]],['Top',[0,10,0],[0,0,-1]],['Bottom',[0,-10,0],[0,0,1]]];
+  const views=[['Front',[0,0,10],[0,1,0]],['Right',[10,0,0],[0,1,0]],['Back',[0,0,-10],[0,1,0]],['Left',[-10,0,0],[0,1,0]]];
   const VPX=520,imgs=[];renderer.setSize(VPX,VPX,false);
   for(const v of views){ocam.position.set(...v[1]);ocam.up.set(...v[2]);ocam.lookAt(0,0,0);ocam.updateProjectionMatrix();renderer.render(scene,ocam);imgs.push([v[0],renderer.domElement.toDataURL('image/png')]);}
   scene.background=null;base.visible=true;pot.rotation.y=prevRot;resize();
@@ -582,10 +656,40 @@ function buildOrthoPage(cv){const prevRot=pot.rotation.y;pot.rotation.y=0;base.v
   const p=profile(),PXM=printScale(p),scaleCm=PXM/PXcm,cellTrue=2*s*PXM;   // a view at true printed scale
   const cols=3,rows=2,B=box(),gap=22;
   const f=Math.min(1,(B.w-gap*(cols-1))/(cols*cellTrue),(B.h-gap*(rows-1))/(rows*cellTrue));
-  const cell=cellTrue*f,gx=B.x+(B.w-(cell*cols+gap*(cols-1)))/2,gy=B.y+(B.h-(cell*rows+gap*(rows-1)))/2;let loaded=0;
-  imgs.forEach(([name,data],k)=>{const im=new Image();im.onload=()=>{const cxx=gx+(k%cols)*(cell+gap),cyy=gy+Math.floor(k/cols)*(cell+gap);
-    ctx.fillStyle='#fff';ctx.fillRect(cxx,cyy,cell,cell);ctx.drawImage(im,cxx,cyy,cell,cell);ctx.strokeStyle='rgba(0,0,0,.16)';ctx.lineWidth=1.2;ctx.strokeRect(cxx,cyy,cell,cell);
-    ctx.fillStyle=ink;ctx.font='800 15px "Archivo"';ctx.fillText(name.toUpperCase(),cxx+9,cyy+22);if(++loaded===6&&curPage===1)showPage(1);};im.src=data;});
+  const cell=cellTrue*f,gx=B.x+(B.w-(cell*cols+gap*(cols-1)))/2,gy=B.y+(B.h-(cell*rows+gap*(rows-1)))/2;
+  const cellAt=k=>[gx+(k%cols)*(cell+gap),gy+Math.floor(k/cols)*(cell+gap)];
+  const frame=(cxx,cyy,name)=>{ctx.strokeStyle='rgba(0,0,0,.16)';ctx.lineWidth=1.2;ctx.strokeRect(cxx,cyy,cell,cell);
+    ctx.fillStyle=ink;ctx.font='800 15px "Archivo"';ctx.fillText(name.toUpperCase(),cxx+9,cyy+22);};
+  // PLAN views (Top/Bottom): concentric rings of the radius profile as seen down the axis.
+  // Looking from an end, you see every radius that isn't hidden by a wider ring closer to you —
+  // i.e. the running-maximum radius. Rings are coloured by depth so the shape reads at a glance.
+  const lerpCol=(t)=>{const c1=[31,127,224],c2=[251,90,75];                 // cobalt (near) → coral (far)
+    return `rgb(${Math.round(c1[0]+(c2[0]-c1[0])*t)},${Math.round(c1[1]+(c2[1]-c1[1])*t)},${Math.round(c1[2]+(c2[2]-c1[2])*t)})`;};
+  const drawPlan=(slot,name,fromTop)=>{const [cxx,cyy]=cellAt(slot);ctx.fillStyle='#fff';ctx.fillRect(cxx,cyy,cell,cell);
+    const cx=cxx+cell/2,cy=cyy+cell/2;
+    // walk from this end inward, collecting rings whose radius exceeds all nearer ones (visible envelope)
+    const order=fromTop?[...Array(NSEG+1).keys()].reverse():[...Array(NSEG+1).keys()];
+    let env=[];let seen=0;
+    for(const i of order){const r=p.rs[i];if(r>seen+0.012){env.push({r,t:fromTop?(NSEG-i)/NSEG:i/NSEG});seen=r;}}
+    if(!env.length)env.push({r:p.rs[fromTop?NSEG:0],t:0});
+    // thin to a legible set (≤7), always keeping the outermost
+    const MAXR=7,rings=[];if(env.length<=MAXR){rings.push(...env);}else{
+      for(let k=0;k<MAXR;k++)rings.push(env[Math.round(k*(env.length-1)/(MAXR-1))]);}
+    // outermost first so inner rings draw on top
+    rings.sort((a,b)=>b.r-a.r);
+    rings.forEach((rg,idx)=>{const ro=rg.r*PXM*f;ctx.save();ctx.lineWidth=idx===0?2.4:1.6;
+      ctx.strokeStyle=lerpCol(rg.t);ctx.globalAlpha=idx===0?1:0.85;
+      ctx.beginPath();ctx.arc(cx,cy,ro,0,7);ctx.stroke();ctx.restore();});
+    // faint inner wall line off the end ring
+    const wall=Math.max(0.05,Math.min(0.12,p.maxR*0.10)),rEnd=p.rs[fromTop?NSEG:0];
+    ctx.save();ctx.globalAlpha=.45;ctx.setLineDash([4,4]);ctx.lineWidth=1.2;ctx.strokeStyle=inkColor();
+    ctx.beginPath();ctx.arc(cx,cy,Math.max(0,(rEnd-wall)*PXM*f),0,7);ctx.stroke();ctx.restore();
+    ctx.fillStyle=inkColor();ctx.globalAlpha=.65;ctx.font='italic 400 12px "Fraunces"';ctx.textAlign='center';
+    ctx.fillText('⌀ '+(2*p.maxR*scaleCm).toFixed(1)+' cm max · ⌀ '+(2*rEnd*scaleCm).toFixed(1)+' cm rim',cx,cyy+cell-12);
+    ctx.textAlign='left';ctx.globalAlpha=1;frame(cxx,cyy,name);};
+  let loaded=0;const finish=()=>{drawPlan(4,'Top',true);drawPlan(5,'Bottom',false);if(curPage===1)showPage(1);};
+  imgs.forEach(([name,data],k)=>{const im=new Image();im.onload=()=>{const [cxx,cyy]=cellAt(k);
+    ctx.fillStyle='#fff';ctx.fillRect(cxx,cyy,cell,cell);ctx.drawImage(im,cxx,cyy,cell,cell);frame(cxx,cyy,name);if(++loaded===4)finish();};im.src=data;});
   const realH=(height*scaleCm).toFixed(1),realDia=(2*p.maxR*scaleCm).toFixed(1);
   const ratio=f>=0.999?'actual printed size · 1:1':`1:${(1/f).toFixed(1)} of the printed piece`;
   ctx.fillStyle=ink;ctx.font='800 15px "Archivo"';ctx.textAlign='center';
@@ -604,6 +708,110 @@ function buildPrintLines(cv){cv.width=A4[0];cv.height=A4[1];const ctx=cv.getCont
 
 function buildPrintMarks(cv){cv.width=A4[0];cv.height=A4[1];const ctx=cv.getContext('2d');chrome(ctx,A4[0],A4[1],'04','Print · Clean',caps[3]);
   const p=profile(),L=layoutGores(p);drawGores(ctx,p,L,artCanvas(),'clean');dimsLabel(ctx,p);}
+
+/* ---------- Instagram-ready post export ---------- */
+function renderPotHiRes(size,angle){
+  const prevRot=pot.rotation.y, prevBaseRot=base.rotation.y, prevBg=scene.background, prevBase=base.visible, prevPR=renderer.getPixelRatio();
+  pot.rotation.y=angle; base.rotation.y=0; base.visible=true; scene.background=null;
+  renderer.setPixelRatio(2);                          // 2× supersample → crisp output
+  const cam=new THREE.PerspectiveCamera(34,1,0.1,100);
+  const topY=height/2, botY=-height/2-0.14;           // rim down to under the plate
+  const cy=(topY+botY)/2, halfV=(topY-botY)/2, halfW=2.2;   // plate radius (~2) incl. margin
+  const vFov=34*Math.PI/180,t=Math.tan(vFov/2);
+  const dist=(Math.max(halfV,halfW)+0.4)/t;           // square render → fit the larger axis
+  cam.position.set(0,cy,dist); cam.lookAt(0,cy,0); cam.updateProjectionMatrix();
+  renderer.setSize(size,size,false);
+  renderer.render(scene,cam);
+  const data=renderer.domElement.toDataURL('image/png');
+  renderer.setPixelRatio(prevPR);
+  scene.background=prevBg; pot.rotation.y=prevRot; base.rotation.y=prevBaseRot; base.visible=prevBase; resize();
+  return data;
+}
+function igCompose(W,H,potData,angleName,pieceName,done){
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#ffffff');g.addColorStop(1,'#d7e6f6');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const rg=ctx.createRadialGradient(W*0.5,H*0.34,0,W*0.5,H*0.34,W*0.7);rg.addColorStop(0,'rgba(120,150,200,.10)');rg.addColorStop(1,'rgba(120,150,200,0)');ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
+  const im=new Image();im.onload=()=>{
+    const ps=Math.min(W,H)*0.96, px=(W-ps)/2, py=(H-ps)/2;
+    ctx.drawImage(im,px,py,ps,ps);                    // clean — no floating shadow
+    // badge top-right
+    const labelF=Math.round(W*0.026);ctx.font=`900 ${labelF}px "Archivo"`;
+    const label='PAPER POTTERY',pad=W*0.022,tw=ctx.measureText(label).width,bw=tw+pad*2,bh=W*0.058,bx=W-bw-W*0.06,by=H*0.06;
+    ctx.lineWidth=Math.max(2,W*0.0035);ctx.strokeStyle='#14110d';roundRect(ctx,bx,by,bw,bh,bh/2);ctx.stroke();
+    ctx.fillStyle='#14110d';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,bx+bw/2,by+bh/2+1);
+    // piece name top-left, serif (Fraunces), baseline aligned to the badge text baseline
+    if(pieceName){const baseY=by+bh/2+labelF*0.36;        // approximate alphabetic baseline of the badge text
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillStyle='#14110d';
+      let fs=Math.round(W*0.044);const maxW=bx-W*0.06-W*0.03;   // up to the badge's left edge
+      ctx.font=`600 ${fs}px "Fraunces"`;
+      while(ctx.measureText(pieceName).width>maxW&&fs>14){fs-=1;ctx.font=`600 ${fs}px "Fraunces"`;}
+      ctx.fillText(pieceName,W*0.06,baseY);}
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';
+    const slug=(pieceName||'piece').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'piece';
+    const a=document.createElement('a');a.download=`paper-pottery-${slug}-${angleName}-${W}x${H}.png`;a.href=cv.toDataURL('image/png');a.click();
+    done&&done();
+  };im.src=potData;
+}
+function igExport(W,H){
+  const pieceName=(document.getElementById('pieceName').value||'').trim();
+  const angles=[['front',0],['right',-Math.PI/2],['back',Math.PI],['left',Math.PI/2]];
+  let i=0;(function next(){if(i>=angles.length)return;const [angleName,ang]=angles[i++];
+    const data=renderPotHiRes(Math.round(Math.min(W,H)*0.96),ang);
+    igCompose(W,H,data,angleName,pieceName,()=>setTimeout(next,450));})();
+}
+document.getElementById('ig11').addEventListener('click',()=>igExport(1200,1200));
+document.getElementById('ig34').addEventListener('click',()=>igExport(1080,1440));
+
+/* ---------- optimized 360° video export ---------- */
+function igVideo(){
+  const W=1080,H=1080,FPS=30,SECS=8,TURNS=2,frames=FPS*SECS;
+  const btn=document.getElementById('igvid');if(btn.dataset.busy)return;btn.dataset.busy='1';const oldTxt=btn.textContent;btn.textContent='…';
+  const pieceName=(document.getElementById('pieceName').value||'').trim();
+  // offscreen branded canvas we record from
+  const out=document.createElement('canvas');out.width=W;out.height=H;const octx=out.getContext('2d');
+  // hi-res 3D render target (square)
+  const RS=Math.round(Math.min(W,H)*0.96);
+  const prevRot=pot.rotation.y, prevBaseRot=base.rotation.y, prevBg=scene.background, prevBase=base.visible, prevPR=renderer.getPixelRatio();
+  base.visible=true; base.rotation.y=0; scene.background=null; renderer.setPixelRatio(2);
+  const cam=new THREE.PerspectiveCamera(34,1,0.1,100);
+  const topY=height/2, botY=-height/2-0.14, cy=(topY+botY)/2, halfV=(topY-botY)/2, halfW=2.2;
+  const t=Math.tan(34*Math.PI/360), dist=(Math.max(halfV,halfW)+0.4)/t;
+  cam.position.set(0,cy,dist); cam.lookAt(0,cy,0); cam.updateProjectionMatrix();
+  renderer.setSize(RS,RS,false);
+  // pick a supported container — prefer mp4, fall back to webm
+  const types=['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm'];
+  const mime=types.find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t))||'video/webm';
+  const ext=mime.startsWith('video/mp4')?'mp4':'webm';
+  const stream=out.captureStream(FPS);
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:6_000_000});
+  const chunks=[];rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+  rec.onstop=()=>{
+    renderer.setPixelRatio(prevPR);scene.background=prevBg;pot.rotation.y=prevRot;base.rotation.y=prevBaseRot;base.visible=prevBase;resize();
+    const slug=(pieceName||'piece').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'piece';
+    const blob=new Blob(chunks,{type:mime});const a=document.createElement('a');a.download=`paper-pottery-${slug}-360.${ext}`;a.href=URL.createObjectURL(blob);a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);btn.textContent=oldTxt;delete btn.dataset.busy;
+  };
+  let f=0;
+  function frame(){
+    pot.rotation.y=(f/frames)*Math.PI*2*TURNS; renderer.render(scene,cam);
+    // branded background
+    const g=octx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#ffffff');g.addColorStop(1,'#d7e6f6');octx.fillStyle=g;octx.fillRect(0,0,W,H);
+    const rg=octx.createRadialGradient(W*0.5,H*0.34,0,W*0.5,H*0.34,W*0.7);rg.addColorStop(0,'rgba(120,150,200,.10)');rg.addColorStop(1,'rgba(120,150,200,0)');octx.fillStyle=rg;octx.fillRect(0,0,W,H);
+    const ps=Math.min(W,H)*0.96,px=(W-ps)/2,py=(H-ps)/2;octx.drawImage(renderer.domElement,px,py,ps,ps);
+    // badge + optional name (same layout as the still export)
+    const labelF=Math.round(W*0.026);octx.font=`900 ${labelF}px "Archivo"`;
+    const label='PAPER POTTERY',pad=W*0.022,tw=octx.measureText(label).width,bw=tw+pad*2,bh=W*0.058,bx=W-bw-W*0.06,by=H*0.06;
+    octx.lineWidth=Math.max(2,W*0.0035);octx.strokeStyle='#14110d';roundRect(octx,bx,by,bw,bh,bh/2);octx.stroke();
+    octx.fillStyle='#14110d';octx.textAlign='center';octx.textBaseline='middle';octx.fillText(label,bx+bw/2,by+bh/2+1);
+    if(pieceName){const baseY=by+bh/2+labelF*0.36;octx.textAlign='left';octx.textBaseline='alphabetic';
+      let fs=Math.round(W*0.044);const maxW=bx-W*0.06-W*0.03;octx.font=`600 ${fs}px "Fraunces"`;
+      while(octx.measureText(pieceName).width>maxW&&fs>14){fs-=1;octx.font=`600 ${fs}px "Fraunces"`;}octx.fillText(pieceName,W*0.06,baseY);}
+    octx.textAlign='left';octx.textBaseline='alphabetic';
+    if(++f<=frames)requestAnimationFrame(frame);else rec.stop();
+  }
+  rec.start();requestAnimationFrame(frame);
+}
+document.getElementById('igvid').addEventListener('click',igVideo);
 
 function downloadPDF(){try{const {jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
   const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
