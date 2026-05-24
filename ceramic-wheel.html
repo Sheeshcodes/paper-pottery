@@ -289,7 +289,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 /* ============================================================ PAPER POTTERY v5 ============================================================ */
-const NSEG=80, TEX_W=1200, TEX_H=600, MIN_R=0.18, MAX_R=1.7, UNIT_CM=2.1, NUM_LAYERS=4;
+const NSEG=80, TEX_W=2400, TEX_H=1200, MIN_R=0.18, MAX_R=1.7, UNIT_CM=2.1, NUM_LAYERS=4;
 const CREAM='#ece7dd', CORAL='#fb5a4b', COBALT='#1f7fe0', GREEN='#1f9d57', RED='#e23b3b';
 let mode='height', spinSpeed=0.0334, height=2.6, paused=false;
 let R=new Float32Array(NSEG+1).fill(0.9);
@@ -345,6 +345,8 @@ const layerC=[];for(let i=0;i<NUM_LAYERS;i++){const c=document.createElement('ca
 let layerOrder=[0,1,2,3];   // canvas indices, bottom → top (paint order)
 const texCanvas=document.createElement('canvas');texCanvas.width=TEX_W;texCanvas.height=TEX_H;const texCtx=texCanvas.getContext('2d');
 const texture=new THREE.CanvasTexture(texCanvas);texture.colorSpace=THREE.SRGBColorSpace;
+texture.anisotropy=(renderer.capabilities&&renderer.capabilities.getMaxAnisotropy)?renderer.capabilities.getMaxAnisotropy():8;
+texture.minFilter=THREE.LinearMipmapLinearFilter;texture.magFilter=THREE.LinearFilter;texture.generateMipmaps=true;
 const bumpTex=new THREE.CanvasTexture(clayBump);
 function composite(){texCtx.clearRect(0,0,TEX_W,TEX_H);texCtx.drawImage(clayBase,0,0);for(const idx of layerOrder)texCtx.drawImage(layerC[idx],0,0);texture.needsUpdate=true;
   if(thumbsReady)scheduleThumbs();}
@@ -561,6 +563,10 @@ document.getElementById('reset').addEventListener('click',()=>{
 /* ============================================================ EXPORT ============================================================ */
 const A4=[1754,1240];
 const PXcm=A4[0]/29.7;            // ≈59 px per cm on a landscape A4 sheet
+const SS=2;                       // supersample: render pages at SS× then print/export sharp
+/* size a page canvas to SS× and scale the context so all A4-coordinate drawing stays identical but high-res */
+function pageCtx(cv){cv.width=A4[0]*SS;cv.height=A4[1]*SS;const ctx=cv.getContext('2d');
+  ctx.setTransform(SS,0,0,SS,0,0);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';return ctx;}
 /* px-per-world-unit used by the printable net (defines the real printed size) */
 const GORES=12;
 /* gore (petal) development — the only flat layout that folds into a curved surface of revolution */
@@ -574,10 +580,19 @@ function layoutGores(p){const B=box(),N=GORES,tabW=18;
   return {N,tabW,PXM,petalMax,colW,totalW,ah,ax:B.x+(B.w-totalW)/2,ay:B.y+(B.h-ah)/2};}
 function printScale(p){return layoutGores(p).PXM;}   // ortho views share this exact scale
 function drawGores(ctx,p,L,src,style){const ink=inkColor();
-  for(let k=0;k<L.N;k++){const colX=L.ax+k*L.colW, cx=colX+L.petalMax/2;
-    for(let py=0;py<L.ah;py++){const i=clamp(Math.round(NSEG-idxBySlant(p,py/L.ah)),0,NSEG);
-      const hw=(L.petalMax/2)*(p.rs[i]/p.maxR),srcX=k/L.N*TEX_W,srcW=TEX_W/L.N,srcY=Math.round((1-i/NSEG)*(TEX_H-1));
-      ctx.drawImage(src,srcX,srcY,srcW,1,cx-hw,L.ay+py,Math.max(hw*2,1),py+1<L.ah?2:1);}
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  const srcW=TEX_W/L.N;
+  // fractional band index at a vertical fraction (no rounding → no skipped texture rows)
+  const idxAt=fr=>clamp(NSEG-idxBySlant(p,clamp(fr,0,1)),0,NSEG);
+  const srcYAt=fr=>(1-idxAt(fr)/NSEG)*(TEX_H-1);
+  const hwAt=fr=>{const i=idxAt(fr);const lo=Math.floor(i),t=i-lo;const r=p.rs[lo]+(p.rs[Math.min(NSEG,lo+1)]-p.rs[lo])*t;return(L.petalMax/2)*(r/p.maxR);};
+  for(let k=0;k<L.N;k++){const colX=L.ax+k*L.colW, cx=colX+L.petalMax/2, srcX=k/L.N*TEX_W;
+    for(let py=0;py<L.ah;py++){
+      const hw=hwAt(py/L.ah);
+      // source span covering THIS output row through the next, so every texture row is drawn
+      let sy0=srcYAt(py/L.ah), sy1=srcYAt((py+1)/L.ah);if(sy1<sy0){const t=sy0;sy0=sy1;sy1=t;}
+      const sh=Math.max(1,sy1-sy0);
+      ctx.drawImage(src,srcX,sy0,srcW,sh,cx-hw,L.ay+py,Math.max(hw*2,1),py+1<L.ah?2:1);}
     const Lp=[],Rp=[];for(let py=0;py<=L.ah;py+=3){const i=clamp(Math.round(NSEG-idxBySlant(p,Math.min(py,L.ah)/L.ah)),0,NSEG);
       const hw=(L.petalMax/2)*(p.rs[i]/p.maxR);Lp.push([cx-hw,L.ay+py]);Rp.push([cx+hw,L.ay+py]);}
     const M=Rp.length-1;
@@ -687,12 +702,17 @@ function box(){return{x:44,y:120,w:A4[0]-88,h:A4[1]-120-200};}
 function foldLine(ctx,x1,y,x2,mountain){ctx.save();ctx.globalAlpha=0.55;ctx.lineCap='round';ctx.lineWidth=2;
   ctx.strokeStyle=mountain?CORAL:COBALT;ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();ctx.restore();}
 
-function buildNetPage(cv){cv.width=A4[0];cv.height=A4[1];const ctx=cv.getContext('2d');
+function buildNetPage(cv){const ctx=pageCtx(cv);
   const ink=chrome(ctx,A4[0],A4[1],'01','Flat Preview',caps[0],'fold');
   const p=profile(),B=box();const PXM=Math.min(B.w/(2*Math.PI*p.maxR),B.h/p.total)*0.9;
   const ah=p.total*PXM,cx=B.x+B.w/2,ay=B.y+(B.h-ah)/2;
-  for(let py=0;py<ah;py++){const i=clamp(Math.round(NSEG-idxBySlant(p,py/ah)),0,NSEG);const rowW=2*Math.PI*p.rs[i]*PXM,srcY=Math.round((1-i/NSEG)*(TEX_H-1));
-    ctx.drawImage(texCanvas,0,srcY,TEX_W,1,cx-rowW/2,ay+py,rowW,py+1<ah?2:1);}
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  const idxAt=fr=>clamp(NSEG-idxBySlant(p,clamp(fr,0,1)),0,NSEG);
+  const srcYAt=fr=>(1-idxAt(fr)/NSEG)*(TEX_H-1);
+  const rAt=fr=>{const i=idxAt(fr),lo=Math.floor(i),t=i-lo;return p.rs[lo]+(p.rs[Math.min(NSEG,lo+1)]-p.rs[lo])*t;};
+  for(let py=0;py<ah;py++){const rowW=2*Math.PI*rAt(py/ah)*PXM;
+    let sy0=srcYAt(py/ah),sy1=srcYAt((py+1)/ah);if(sy1<sy0){const t=sy0;sy0=sy1;sy1=t;}const sh=Math.max(1,sy1-sy0);
+    ctx.drawImage(texCanvas,0,sy0,TEX_W,sh,cx-rowW/2,ay+py,rowW,py+1<ah?2:1);}
   ctx.strokeStyle=ink;ctx.lineWidth=2.5;ctx.beginPath();
   for(let i=NSEG;i>=0;i--){const py=ay+((NSEG-i)/NSEG)*ah,x=cx-Math.PI*p.rs[i]*PXM;i===NSEG?ctx.moveTo(x,py):ctx.lineTo(x,py);}
   for(let i=0;i<=NSEG;i++){const py=ay+((NSEG-i)/NSEG)*ah;ctx.lineTo(cx+Math.PI*p.rs[i]*PXM,py);}ctx.closePath();ctx.stroke();
@@ -713,7 +733,7 @@ function buildOrthoPage(cv,onDone){const prevRot=pot.rotation.y;const VPX=520,im
     imgs.push(['Left',shoot([-10,0,0],[0,1,0])]);
   }catch(err){console.error('ortho side render failed',err);}
   finally{ scene.background=null;base.visible=true;pot.rotation.y=prevRot;resize(); }
-  cv.width=A4[0];cv.height=A4[1];const ctx=cv.getContext('2d');const ink=chrome(ctx,A4[0],A4[1],'02','Six Views',caps[1]);
+  const ctx=pageCtx(cv);const ink=chrome(ctx,A4[0],A4[1],'02','Six Views',caps[1]);
   const p=profile(),PXM=printScale(p),scaleCm=PXM/PXcm,s=height/2+0.6,cellTrue=2*s*PXM;
   const cols=3,rows=2,B=box(),gap=22;
   const f=Math.min(1,(B.w-gap*(cols-1))/(cols*cellTrue),(B.h-gap*(rows-1))/(rows*cellTrue));
@@ -769,15 +789,19 @@ function buildOrthoPage(cv,onDone){const prevRot=pot.rotation.y;const VPX=520,im
 function layoutArt(p){const B=box();const PXM=printScale(p);const aw=2*Math.PI*p.maxR*PXM,ah=p.total*PXM;return{aw,ah,ax:B.x+(B.w-aw)/2,ay:B.y+(B.h-ah)/2,PXM};}
 /* artwork over the editable background (so the bg prints behind unpainted clay) */
 function artCanvas(){const a=document.createElement('canvas');a.width=TEX_W;a.height=TEX_H;const x=a.getContext('2d');x.drawImage(clayBase,0,0);for(const idx of layerOrder)x.drawImage(layerC[idx],0,0);return a;}
-function drawArtBlock(ctx,p,L,src){for(let py=0;py<L.ah;py++){const i=clamp(Math.round(NSEG-idxBySlant(p,py/L.ah)),0,NSEG);const srcY=Math.round((1-i/NSEG)*(TEX_H-1));ctx.drawImage(src,0,srcY,TEX_W,1,L.ax,L.ay+py,L.aw,py+1<L.ah?2:1);}}
+function drawArtBlock(ctx,p,L,src){ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  const idxAt=fr=>clamp(NSEG-idxBySlant(p,clamp(fr,0,1)),0,NSEG);
+  const srcYAt=fr=>(1-idxAt(fr)/NSEG)*(TEX_H-1);
+  for(let py=0;py<L.ah;py++){let sy0=srcYAt(py/L.ah),sy1=srcYAt((py+1)/L.ah);if(sy1<sy0){const t=sy0;sy0=sy1;sy1=t;}const sh=Math.max(1,sy1-sy0);
+    ctx.drawImage(src,0,sy0,TEX_W,sh,L.ax,L.ay+py,L.aw,py+1<L.ah?2:1);}}
 function trimTab(ctx,L,ink){ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.strokeRect(L.ax,L.ay,L.aw,L.ah);
   ctx.save();ctx.globalAlpha=.5;ctx.setLineDash([4,5]);ctx.strokeStyle=ink;ctx.strokeRect(L.ax-22,L.ay,22,L.ah);ctx.restore();
   ctx.fillStyle=ink;ctx.save();ctx.translate(L.ax-11,L.ay+L.ah/2);ctx.rotate(-Math.PI/2);ctx.globalAlpha=.6;ctx.font='600 11px "Archivo"';ctx.textAlign='center';ctx.fillText('GLUE',0,4);ctx.restore();ctx.textAlign='left';}
 
-function buildPrintLines(cv){cv.width=A4[0];cv.height=A4[1];const ctx=cv.getContext('2d');chrome(ctx,A4[0],A4[1],'03','Print · Assembly',caps[2]);
+function buildPrintLines(cv){const ctx=pageCtx(cv);chrome(ctx,A4[0],A4[1],'03','Print · Assembly',caps[2]);
   const p=profile(),L=layoutGores(p);drawGores(ctx,p,L,artCanvas(),'guides');dimsLabel(ctx,p);}
 
-function buildPrintMarks(cv){cv.width=A4[0];cv.height=A4[1];const ctx=cv.getContext('2d');chrome(ctx,A4[0],A4[1],'04','Print · Clean',caps[3]);
+function buildPrintMarks(cv){const ctx=pageCtx(cv);chrome(ctx,A4[0],A4[1],'04','Print · Clean',caps[3]);
   const p=profile(),L=layoutGores(p);drawGores(ctx,p,L,artCanvas(),'clean');dimsLabel(ctx,p);}
 
 /* ---------- Instagram-ready post export ---------- */
