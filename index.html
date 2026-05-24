@@ -38,6 +38,8 @@
     box-shadow:0 30px 80px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.05);}
   .viewport{position:relative; flex:1 1 auto; min-height:0; background:var(--vp-bg);}
   canvas#gl{position:absolute; inset:0; width:100%; height:100%; touch-action:none;}
+  #scaleGuide{position:absolute; inset:0; width:100%; height:100%; z-index:2; pointer-events:none; opacity:0; transition:opacity .18s ease;}
+  #scaleGuide.show{opacity:1;}
   .topbar{position:absolute; top:0; left:0; right:0; z-index:3; display:flex; align-items:center;
     justify-content:space-between; padding:18px 18px 0; pointer-events:none;}
   .badge{pointer-events:auto; border:2px solid var(--ink); border-radius:999px; padding:4px 14px 5px;
@@ -191,6 +193,7 @@
   <div class="viewport">
     <canvas id="gl"></canvas>
     <div class="topbar"><div class="badge">PAPER POTTERY</div></div>
+    <svg id="scaleGuide" aria-hidden="true"></svg>
   </div>
 
   <div class="dock">
@@ -369,10 +372,33 @@ function resize(){const w=canvas.clientWidth||1,h=canvas.clientHeight||1;rendere
   const dist=Math.min(9,Math.max(4.0,distV,distH))*1.04;
   camera.position.set(0,cy,dist);camera.lookAt(0,cy,0);camera.updateProjectionMatrix();}
 new ResizeObserver(resize).observe(canvas);resize();
+/* ---- live scale guide: dotted height line + true cm, only while dragging SCALE ---- */
+let scaleGuideOn=false;
+const scaleGuideEl=document.getElementById('scaleGuide');
+function projectY(worldY){const v=new THREE.Vector3(0,worldY,0).project(camera);
+  const r=canvas.getBoundingClientRect();return{x:(v.x*0.5+0.5)*r.width,y:(-v.y*0.5+0.5)*r.height};}
+function drawScaleGuide(){
+  if(!scaleGuideOn){return;}
+  const r=canvas.getBoundingClientRect();
+  const top=projectY(height/2), bot=projectY(-height/2);
+  const scaleCm=printScale(profile())/PXcm, cm=(height*scaleCm).toFixed(1);
+  // place the line just right of the pot's projected silhouette
+  const rimEdge=new THREE.Vector3(p_maxR(),0,0).project(camera);
+  const xLine=Math.min(r.width-58,(rimEdge.x*0.5+0.5)*r.width+26);
+  const y1=top.y, y2=bot.y, midY=(y1+y2)/2;
+  scaleGuideEl.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);
+  scaleGuideEl.innerHTML=
+    `<line x1="${xLine}" y1="${y1}" x2="${xLine}" y2="${y2}" stroke="#14110d" stroke-width="1.6" stroke-dasharray="5 5" opacity="0.85"/>`+
+    `<line x1="${xLine-7}" y1="${y1}" x2="${xLine+7}" y2="${y1}" stroke="#14110d" stroke-width="1.6"/>`+
+    `<line x1="${xLine-7}" y1="${y2}" x2="${xLine+7}" y2="${y2}" stroke="#14110d" stroke-width="1.6"/>`+
+    `<g transform="translate(${xLine+12},${midY})"><rect x="0" y="-13" width="64" height="26" rx="7" fill="#14110d"/>`+
+    `<text x="32" y="5" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="800" font-size="14" fill="#fff">${cm} cm</text></g>`;
+}
+function showScaleGuide(on){scaleGuideOn=on;scaleGuideEl.classList.toggle('show',on);if(on)drawScaleGuide();}
 function tick(){
   if(!paused){pot.rotation.y+=spinSpeed;base.rotation.y+=spinSpeed;
     if(mode==='paint'&&paintHeld.size){paintHeld.forEach((pos,id)=>{setNDCxy(pos.x,pos.y);paintAt(id);});}}
-  renderer.render(scene,camera);requestAnimationFrame(tick);}
+  renderer.render(scene,camera);if(scaleGuideOn)drawScaleGuide();requestAnimationFrame(tick);}
 tick();
 
 /* ---------- multi-touch: subtractive carving from both sides ---------- */
@@ -382,13 +408,15 @@ function setNDCxy(cx,cy){const r=canvas.getBoundingClientRect();ndc.x=((cx-r.lef
 function setNDC(e){setNDCxy(e.clientX,e.clientY);}
 function hit(){raycaster.setFromCamera(ndc,camera);const h=raycaster.intersectObject(pot,false);return h.length?h[0]:null;}
 canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(mode==='height')showScaleGuide(true);
   if(mode==='paint'){setNDC(e);paintLast.delete(e.pointerId);paintHeld.set(e.pointerId,{x:e.clientX,y:e.clientY});paintAt(e.pointerId);}});
 canvas.addEventListener('pointermove',e=>{const p=pointers.get(e.pointerId);if(!p)return;
   const dx=e.clientX-p.x,dy=e.clientY-p.y;setNDC(e);
-  if(mode==='height'){height=clamp(height-dy*0.012,1.2,4.6);base.position.y=-height/2-0.06;build();resize();}
+  if(mode==='height'){height=clamp(height-dy*0.012,1.2,4.6);base.position.y=-height/2-0.06;build();resize();showScaleGuide(true);}
   else if(mode==='shape'){carve(dx);}else if(mode==='paint'){paintHeld.set(e.pointerId,{x:e.clientX,y:e.clientY});paintAt(e.pointerId);}
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});});
-function endPtr(e){pointers.delete(e.pointerId);paintLast.delete(e.pointerId);paintHeld.delete(e.pointerId);}
+function endPtr(e){pointers.delete(e.pointerId);paintLast.delete(e.pointerId);paintHeld.delete(e.pointerId);
+  if(mode==='height'&&pointers.size===0)setTimeout(()=>{if(pointers.size===0)showScaleGuide(false);},650);}
 canvas.addEventListener('pointerup',endPtr);canvas.addEventListener('pointercancel',endPtr);
 /* carve: only inward (toward the axis). A finger on the right that moves left removes clay; same on the left moving right. */
 function carve(dx){const h=hit();if(!h)return;const t=clamp((h.point.y+height/2)/height,0,1);const idx=Math.round(t*NSEG);
@@ -478,6 +506,7 @@ document.querySelectorAll('#modes button').forEach(t=>t.addEventListener('click'
   syncPlayForMode();
   document.getElementById('reset').textContent='RESET '+(mode==='height'?'SCALE':mode==='shape'?'SHAPE':'GLAZE');
   closePops();paintLast.clear();
+  if(mode!=='height')showScaleGuide(false);
   if(window.gtag)gtag('event','mode_switch',{mode:t.dataset.mode});}));
 document.getElementById('spin').addEventListener('input',e=>spinSpeed=Math.pow(+e.target.value/100,1.7)*0.146575);
 const playBtn=document.getElementById('playPause');
@@ -647,6 +676,21 @@ document.getElementById('export').addEventListener('click',async()=>{try{await d
   buildOrthoPage(pageCanvases[1],()=>{buildFilmstrip();if(curPage===1)showPage(1);});
   buildFilmstrip();showPage(0);document.getElementById('exportView').classList.add('show');
   if(window.gtag)gtag('event','export_opened');});
+function stampName(cv){const ctx=cv.getContext('2d');const W=A4[0],H=A4[1];
+  const pn=(document.getElementById('pieceName').value||'').trim();
+  // clear the footer strip area (left side) by repainting the background slice, then write the name
+  ctx.save();ctx.setTransform(SS,0,0,SS,0,0);
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,PAGEBG[0]);g.addColorStop(1,PAGEBG[1]);
+  ctx.fillStyle=g;ctx.fillRect(36,H-34,360,28);
+  if(pn){ctx.fillStyle=inkColor();ctx.globalAlpha=.7;ctx.font='italic 400 12px "Fraunces"';ctx.textAlign='left';ctx.fillText(pn,44,H-18);}
+  ctx.restore();}
+let _nameT=0;document.getElementById('pieceName').addEventListener('input',()=>{
+  if(!document.getElementById('exportView').classList.contains('show'))return;
+  clearTimeout(_nameT);_nameT=setTimeout(()=>{
+    pageCanvases.forEach(stampName);          // restamp the name footer on all four pages (cheap, no rebuild)
+    buildFilmstrip();showPage(curPage);
+  },160);
+});
 function buildFilmstrip(){const strip=document.getElementById('filmstrip');strip.innerHTML='';
   pageCanvases.forEach((src,i)=>{const b=document.createElement('button');b.className='thumb-pg'+(i===curPage?' on':'');b.dataset.page=i;
     const tc=document.createElement('canvas');tc.width=148;tc.height=104;const x=tc.getContext('2d');
@@ -678,6 +722,10 @@ function chrome(ctx,W,H,num,title,instr,lt){
   ctx.font='italic 400 22px "Fraunces"';wrap(ctx,instr,180,H-86,W-360,30);
   legend(ctx,W,H,lt||'gore');
   rulerBar(ctx,W);
+  // piece name: small footer, lower-left (same size as the ruler note)
+  const pn=(typeof document!=='undefined'&&document.getElementById('pieceName')?document.getElementById('pieceName').value.trim():'');
+  if(pn){ctx.save();ctx.fillStyle=ink;ctx.globalAlpha=.7;ctx.font='italic 400 12px "Fraunces"';ctx.textAlign='left';
+    ctx.fillText(pn,44,H-18);ctx.restore();}
   return ink;
 }
 function legend(ctx,W,H,type){const items=type==='fold'
