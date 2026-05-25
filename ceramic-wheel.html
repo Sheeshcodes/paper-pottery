@@ -278,9 +278,9 @@
           <rect x="3" y="3" width="18" height="18" rx="3.2"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/>
         </svg>
         <input type="text" id="pieceName" class="nameinput" placeholder="Name your piece (optional)" maxlength="40" autocomplete="off">
-        <button class="btn igbtn" id="ig11" title="Image export · 1200 × 1200"><svg class="dli" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></svg>1:1</button>
-        <button class="btn igbtn" id="ig34" title="Image export · 1080 × 1440"><svg class="dli" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></svg>3:4</button>
-        <button class="btn igbtn" id="igvid" title="Video export · 1080 × 1080 · 360° MP4"><svg class="dli" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></svg>360°</button>
+        <button class="btn igbtn" id="ig11" title="Image export · 1200 × 1200"><svg class="dli" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></svg>Image 1:1</button>
+        <button class="btn igbtn" id="ig34" title="Image export · 1080 × 1440"><svg class="dli" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></svg>Image 3:4</button>
+        <button class="btn igbtn" id="igvid" title="Video export · 1080 × 1080 · 360° MP4"><svg class="dli" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></svg>Video 360°</button>
       </div>
       <button class="btn primary" id="download" title="Print export · A4 PDF"><svg class="dli" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></svg>A4 PDF</button>
     </div>
@@ -921,7 +921,7 @@ document.getElementById('ig34').addEventListener('click',()=>{if(window.gtag)gta
 
 /* ---------- optimized 360° video export ---------- */
 function igVideo(){
-  const W=1080,H=1080,FPS=30,SECS=8,TURNS=2,frames=FPS*SECS;
+  const W=1080,H=1080,FPS=30,SECS=10,TURNS=3,frames=FPS*SECS;
   const btn=document.getElementById('igvid');if(btn.dataset.busy)return;btn.dataset.busy='1';const oldTxt=btn.textContent;btn.textContent='…';
   const pieceName=(document.getElementById('pieceName').value||'').trim();
   // offscreen branded canvas we record from
