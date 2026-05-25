@@ -408,6 +408,10 @@ function setNDCxy(cx,cy){const r=canvas.getBoundingClientRect();ndc.x=((cx-r.lef
 function setNDC(e){setNDCxy(e.clientX,e.clientY);}
 function hit(){raycaster.setFromCamera(ndc,camera);const h=raycaster.intersectObject(pot,false);return h.length?h[0]:null;}
 canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  // on phones, tapping the pot collapses an open layer list to free up space
+  const tgl=document.getElementById('layersToggle');
+  if(tgl&&getComputedStyle(tgl).display!=='none'){const ls=document.getElementById('layers');
+    if(!ls.classList.contains('collapsed')){ls.classList.add('collapsed');document.getElementById('layersCaret').classList.remove('open');}}
   if(mode==='height')showScaleGuide(true);
   if(mode==='paint'){setNDC(e);paintLast.delete(e.pointerId);paintHeld.set(e.pointerId,{x:e.clientX,y:e.clientY});paintAt(e.pointerId);}});
 canvas.addEventListener('pointermove',e=>{const p=pointers.get(e.pointerId);if(!p)return;
